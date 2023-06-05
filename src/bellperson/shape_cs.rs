@@ -107,7 +107,6 @@ where
     NR: Into<String>,
     N: FnOnce() -> NR,
   {
-    ()
   }
 
   fn pop_namespace(&mut self) {}
