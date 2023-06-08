@@ -21,6 +21,7 @@ use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use sha3::Shake256;
 use std::io::Read;
+use std::time::Instant;
 
 /// A wrapper for compressed group elements of pallas
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -95,6 +96,8 @@ macro_rules! impl_traits {
       }
 
       fn from_label(label: &'static [u8], n: usize) -> Vec<Self::PreprocessedGroupElement> {
+        println!("`from_label`");
+        println!("  n = {}", n);
         let mut shake = Shake256::default();
         shake.input(label);
         let mut reader = shake.xof_result();
@@ -114,7 +117,9 @@ macro_rules! impl_traits {
           .collect();
 
         let num_threads = rayon::current_num_threads();
-        if ck_proj.len() > num_threads {
+        let start = Instant::now();
+        println!("  num_threads = {}", num_threads);
+        let res = if ck_proj.len() > num_threads {
           let chunk = (ck_proj.len() as f64 / num_threads as f64).ceil() as usize;
           (0..num_threads)
             .collect::<Vec<usize>>()
@@ -142,7 +147,10 @@ macro_rules! impl_traits {
           let mut ck = vec![$name_curve_affine::identity(); n];
           <Self as Curve>::batch_normalize(&ck_proj, &mut ck);
           ck
-        }
+        };
+        let end = start.elapsed();
+        println!("  time = {:?}", end);
+        res
       }
 
       fn to_coordinates(&self) -> (Self::Base, Self::Base, bool) {
