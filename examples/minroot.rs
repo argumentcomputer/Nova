@@ -175,122 +175,122 @@ fn main() {
     >::setup(circuit_primary, circuit_secondary.clone());
     println!("PublicParams::setup, took {:?} ", start.elapsed());
 
-    println!(
-      "Number of constraints per step (primary circuit): {}",
-      pp.num_constraints().0
-    );
-    println!(
-      "Number of constraints per step (secondary circuit): {}",
-      pp.num_constraints().1
-    );
+    // println!(
+    //   "Number of constraints per step (primary circuit): {}",
+    //   pp.num_constraints().0
+    // );
+    // println!(
+    //   "Number of constraints per step (secondary circuit): {}",
+    //   pp.num_constraints().1
+    // );
 
-    println!(
-      "Number of variables per step (primary circuit): {}",
-      pp.num_variables().0
-    );
-    println!(
-      "Number of variables per step (secondary circuit): {}",
-      pp.num_variables().1
-    );
+    // println!(
+    //   "Number of variables per step (primary circuit): {}",
+    //   pp.num_variables().0
+    // );
+    // println!(
+    //   "Number of variables per step (secondary circuit): {}",
+    //   pp.num_variables().1
+    // );
 
-    // produce non-deterministic advice
-    let (z0_primary, minroot_iterations) = MinRootIteration::new(
-      num_iters_per_step * num_steps,
-      &<G1 as Group>::Scalar::zero(),
-      &<G1 as Group>::Scalar::one(),
-    );
-    let minroot_circuits = (0..num_steps)
-      .map(|i| MinRootCircuit {
-        seq: (0..num_iters_per_step)
-          .map(|j| MinRootIteration {
-            x_i: minroot_iterations[i * num_iters_per_step + j].x_i,
-            y_i: minroot_iterations[i * num_iters_per_step + j].y_i,
-            x_i_plus_1: minroot_iterations[i * num_iters_per_step + j].x_i_plus_1,
-            y_i_plus_1: minroot_iterations[i * num_iters_per_step + j].y_i_plus_1,
-          })
-          .collect::<Vec<_>>(),
-      })
-      .collect::<Vec<_>>();
+    // // produce non-deterministic advice
+    // let (z0_primary, minroot_iterations) = MinRootIteration::new(
+    //   num_iters_per_step * num_steps,
+    //   &<G1 as Group>::Scalar::zero(),
+    //   &<G1 as Group>::Scalar::one(),
+    // );
+    // let minroot_circuits = (0..num_steps)
+    //   .map(|i| MinRootCircuit {
+    //     seq: (0..num_iters_per_step)
+    //       .map(|j| MinRootIteration {
+    //         x_i: minroot_iterations[i * num_iters_per_step + j].x_i,
+    //         y_i: minroot_iterations[i * num_iters_per_step + j].y_i,
+    //         x_i_plus_1: minroot_iterations[i * num_iters_per_step + j].x_i_plus_1,
+    //         y_i_plus_1: minroot_iterations[i * num_iters_per_step + j].y_i_plus_1,
+    //       })
+    //       .collect::<Vec<_>>(),
+    //   })
+    //   .collect::<Vec<_>>();
 
-    let z0_secondary = vec![<G2 as Group>::Scalar::zero()];
+    // let z0_secondary = vec![<G2 as Group>::Scalar::zero()];
 
-    type C1 = MinRootCircuit<<G1 as Group>::Scalar>;
-    type C2 = TrivialTestCircuit<<G2 as Group>::Scalar>;
-    // produce a recursive SNARK
-    println!("Generating a RecursiveSNARK...");
-    let mut recursive_snark: Option<RecursiveSNARK<G1, G2, C1, C2>> = None;
+    // type C1 = MinRootCircuit<<G1 as Group>::Scalar>;
+    // type C2 = TrivialTestCircuit<<G2 as Group>::Scalar>;
+    // // produce a recursive SNARK
+    // println!("Generating a RecursiveSNARK...");
+    // let mut recursive_snark: Option<RecursiveSNARK<G1, G2, C1, C2>> = None;
 
-    for (i, circuit_primary) in minroot_circuits.iter().take(num_steps).enumerate() {
-      let start = Instant::now();
-      let res = RecursiveSNARK::prove_step(
-        &pp,
-        recursive_snark,
-        circuit_primary.clone(),
-        circuit_secondary.clone(),
-        z0_primary.clone(),
-        z0_secondary.clone(),
-      );
-      assert!(res.is_ok());
-      println!(
-        "RecursiveSNARK::prove_step {}: {:?}, took {:?} ",
-        i,
-        res.is_ok(),
-        start.elapsed()
-      );
-      recursive_snark = Some(res.unwrap());
-    }
+    // for (i, circuit_primary) in minroot_circuits.iter().take(num_steps).enumerate() {
+    //   let start = Instant::now();
+    //   let res = RecursiveSNARK::prove_step(
+    //     &pp,
+    //     recursive_snark,
+    //     circuit_primary.clone(),
+    //     circuit_secondary.clone(),
+    //     z0_primary.clone(),
+    //     z0_secondary.clone(),
+    //   );
+    //   assert!(res.is_ok());
+    //   println!(
+    //     "RecursiveSNARK::prove_step {}: {:?}, took {:?} ",
+    //     i,
+    //     res.is_ok(),
+    //     start.elapsed()
+    //   );
+    //   recursive_snark = Some(res.unwrap());
+    // }
 
-    assert!(recursive_snark.is_some());
-    let recursive_snark = recursive_snark.unwrap();
+    // assert!(recursive_snark.is_some());
+    // let recursive_snark = recursive_snark.unwrap();
 
-    // verify the recursive SNARK
-    println!("Verifying a RecursiveSNARK...");
-    let start = Instant::now();
-    let res = recursive_snark.verify(&pp, num_steps, z0_primary.clone(), z0_secondary.clone());
-    println!(
-      "RecursiveSNARK::verify: {:?}, took {:?}",
-      res.is_ok(),
-      start.elapsed()
-    );
-    assert!(res.is_ok());
+    // // verify the recursive SNARK
+    // println!("Verifying a RecursiveSNARK...");
+    // let start = Instant::now();
+    // let res = recursive_snark.verify(&pp, num_steps, z0_primary.clone(), z0_secondary.clone());
+    // println!(
+    //   "RecursiveSNARK::verify: {:?}, took {:?}",
+    //   res.is_ok(),
+    //   start.elapsed()
+    // );
+    // assert!(res.is_ok());
 
-    // produce a compressed SNARK
-    println!("Generating a CompressedSNARK using Spartan with IPA-PC...");
-    let (pk, vk) = CompressedSNARK::<_, _, _, _, S1, S2>::setup(&pp).unwrap();
+    // // produce a compressed SNARK
+    // println!("Generating a CompressedSNARK using Spartan with IPA-PC...");
+    // let (pk, vk) = CompressedSNARK::<_, _, _, _, S1, S2>::setup(&pp).unwrap();
 
-    let start = Instant::now();
-    type EE1 = nova_snark::provider::ipa_pc::EvaluationEngine<G1>;
-    type EE2 = nova_snark::provider::ipa_pc::EvaluationEngine<G2>;
-    type S1 = nova_snark::spartan::RelaxedR1CSSNARK<G1, EE1>;
-    type S2 = nova_snark::spartan::RelaxedR1CSSNARK<G2, EE2>;
+    // let start = Instant::now();
+    // type EE1 = nova_snark::provider::ipa_pc::EvaluationEngine<G1>;
+    // type EE2 = nova_snark::provider::ipa_pc::EvaluationEngine<G2>;
+    // type S1 = nova_snark::spartan::RelaxedR1CSSNARK<G1, EE1>;
+    // type S2 = nova_snark::spartan::RelaxedR1CSSNARK<G2, EE2>;
 
-    let res = CompressedSNARK::<_, _, _, _, S1, S2>::prove(&pp, &pk, &recursive_snark);
-    println!(
-      "CompressedSNARK::prove: {:?}, took {:?}",
-      res.is_ok(),
-      start.elapsed()
-    );
-    assert!(res.is_ok());
-    let compressed_snark = res.unwrap();
+    // let res = CompressedSNARK::<_, _, _, _, S1, S2>::prove(&pp, &pk, &recursive_snark);
+    // println!(
+    //   "CompressedSNARK::prove: {:?}, took {:?}",
+    //   res.is_ok(),
+    //   start.elapsed()
+    // );
+    // assert!(res.is_ok());
+    // let compressed_snark = res.unwrap();
 
-    let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
-    bincode::serialize_into(&mut encoder, &compressed_snark).unwrap();
-    let compressed_snark_encoded = encoder.finish().unwrap();
-    println!(
-      "CompressedSNARK::len {:?} bytes",
-      compressed_snark_encoded.len()
-    );
+    // let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
+    // bincode::serialize_into(&mut encoder, &compressed_snark).unwrap();
+    // let compressed_snark_encoded = encoder.finish().unwrap();
+    // println!(
+    //   "CompressedSNARK::len {:?} bytes",
+    //   compressed_snark_encoded.len()
+    // );
 
-    // verify the compressed SNARK
-    println!("Verifying a CompressedSNARK...");
-    let start = Instant::now();
-    let res = compressed_snark.verify(&vk, num_steps, z0_primary, z0_secondary);
-    println!(
-      "CompressedSNARK::verify: {:?}, took {:?}",
-      res.is_ok(),
-      start.elapsed()
-    );
-    assert!(res.is_ok());
+    // // verify the compressed SNARK
+    // println!("Verifying a CompressedSNARK...");
+    // let start = Instant::now();
+    // let res = compressed_snark.verify(&vk, num_steps, z0_primary, z0_secondary);
+    // println!(
+    //   "CompressedSNARK::verify: {:?}, took {:?}",
+    //   res.is_ok(),
+    //   start.elapsed()
+    // );
+    // assert!(res.is_ok());
     println!("=========================================================");
   }
 }

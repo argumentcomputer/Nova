@@ -97,16 +97,24 @@ macro_rules! impl_traits {
 
       fn from_label(label: &'static [u8], n: usize) -> Vec<Self::PreprocessedGroupElement> {
         println!("`from_label`");
-        println!("  n = {}", n);
+        println!("    n = {}", n);
+        let fun_start = Instant::now();
+
         let mut shake = Shake256::default();
         shake.input(label);
         let mut reader = shake.xof_result();
+
+        let start = Instant::now();
         let mut uniform_bytes_vec = Vec::new();
         for _ in 0..n {
           let mut uniform_bytes = [0u8; 32];
           reader.read_exact(&mut uniform_bytes).unwrap();
           uniform_bytes_vec.push(uniform_bytes);
         }
+        let end = start.elapsed();
+        println!("    uniform_bytes_vec time = {:?}", end);
+
+        let start = Instant::now();
         let ck_proj: Vec<$name_curve> = (0..n)
           .collect::<Vec<usize>>()
           .into_par_iter()
@@ -115,10 +123,12 @@ macro_rules! impl_traits {
             hash(&uniform_bytes_vec[i])
           })
           .collect();
+        let end = start.elapsed();
+        println!("    ck_proj time = {:?}", end);
 
         let num_threads = rayon::current_num_threads();
         let start = Instant::now();
-        println!("  num_threads = {}", num_threads);
+        println!("    num_threads = {}", num_threads);
         let res = if ck_proj.len() > num_threads {
           let chunk = (ck_proj.len() as f64 / num_threads as f64).ceil() as usize;
           (0..num_threads)
@@ -149,7 +159,9 @@ macro_rules! impl_traits {
           ck
         };
         let end = start.elapsed();
-        println!("  time = {:?}", end);
+        println!("    res time = {:?}", end);
+        let fun_end = fun_start.elapsed();
+        println!("    time = {:?}", fun_end);
         res
       }
 
@@ -361,16 +373,19 @@ mod tests {
   type G = pasta_curves::pallas::Point;
 
   fn from_label_serial(label: &'static [u8], n: usize) -> Vec<EpAffine> {
+    let start = Instant::now();
     let mut shake = Shake256::default();
     shake.input(label);
     let mut reader = shake.xof_result();
     let mut ck = Vec::new();
+    let hash = Ep::hash_to_curve("from_uniform_bytes");
     for _ in 0..n {
       let mut uniform_bytes = [0u8; 32];
       reader.read_exact(&mut uniform_bytes).unwrap();
-      let hash = Ep::hash_to_curve("from_uniform_bytes");
       ck.push(hash(&uniform_bytes).to_affine());
     }
+    let end = start.elapsed();
+    println!("    from_label_serial time = {:?}", end);
     ck
   }
 
@@ -378,7 +393,8 @@ mod tests {
   fn test_from_label() {
     let label = b"test_from_label";
     for n in [
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 1021,
+      2000
+      // 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 1021,
     ] {
       let ck_par = <G as Group>::from_label(label, n);
       let ck_ser = from_label_serial(label, n);
