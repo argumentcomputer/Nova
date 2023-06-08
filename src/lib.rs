@@ -591,8 +591,15 @@ where
     ),
     NovaError,
   > {
+    println!("`CompressedSNARK::setup`");
+    let start = Instant::now();
     let (pk_primary, vk_primary) = S1::setup(&pp.ck_primary, &pp.r1cs_shape_primary)?;
+    let t1 = start.elapsed();
+    println!("    primary keys = {:?}", t1);
+
     let (pk_secondary, vk_secondary) = S2::setup(&pp.ck_secondary, &pp.r1cs_shape_secondary)?;
+    let t2 = start.elapsed();
+    println!("    secondary keys = {:?}", t2 - t1);
 
     let pk = ProverKey {
       pk_primary,
@@ -612,6 +619,9 @@ where
       _p_c1: Default::default(),
       _p_c2: Default::default(),
     };
+
+    let t3 = start.elapsed();
+    println!("    time = {:?}", t3);
 
     Ok((pk, vk))
   }
