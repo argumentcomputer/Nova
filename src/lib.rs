@@ -34,6 +34,7 @@ use ::bellperson::{Circuit, ConstraintSystem};
 use circuit::{NovaAugmentedCircuit, NovaAugmentedCircuitInputs, NovaAugmentedCircuitParams};
 use constants::{BN_LIMB_WIDTH, BN_N_LIMBS, NUM_FE_WITHOUT_IO_FOR_CRHF, NUM_HASH_BITS};
 use core::marker::PhantomData;
+use std::time::Instant;
 use errors::NovaError;
 use ff::Field;
 use flate2::{write::ZlibEncoder, Compression};
@@ -85,13 +86,19 @@ where
 {
   /// Create a new `PublicParams`
   pub fn setup(c_primary: C1, c_secondary: C2) -> Self {
+    println!("PublicParams::setup");
+    let start = Instant::now();
     let augmented_circuit_params_primary =
       NovaAugmentedCircuitParams::new(BN_LIMB_WIDTH, BN_N_LIMBS, true);
     let augmented_circuit_params_secondary =
       NovaAugmentedCircuitParams::new(BN_LIMB_WIDTH, BN_N_LIMBS, false);
+    let t1 = start.elapsed();
+    println!("NovaAugmentedCircuitParams: {:?}", t1);
 
     let ro_consts_primary: ROConstants<G1> = ROConstants::<G1>::new();
     let ro_consts_secondary: ROConstants<G2> = ROConstants::<G2>::new();
+    let t2 = start.elapsed();
+    println!("ROConstants: {:?}", t2 - t1);
 
     let F_arity_primary = c_primary.arity();
     let F_arity_secondary = c_secondary.arity();
@@ -99,6 +106,8 @@ where
     // ro_consts_circuit_primary are parameterized by G2 because the type alias uses G2::Base = G1::Scalar
     let ro_consts_circuit_primary: ROConstantsCircuit<G2> = ROConstantsCircuit::<G2>::new();
     let ro_consts_circuit_secondary: ROConstantsCircuit<G1> = ROConstantsCircuit::<G1>::new();
+    let t3 = start.elapsed();
+    println!("ROConstantsCircuit: {:?}", t3 - t2);
 
     // Initialize ck for the primary
     let circuit_primary: NovaAugmentedCircuit<G2, C1> = NovaAugmentedCircuit::new(
@@ -110,6 +119,8 @@ where
     let mut cs: ShapeCS<G1> = ShapeCS::new();
     let _ = circuit_primary.synthesize(&mut cs);
     let (r1cs_shape_primary, ck_primary) = cs.r1cs_shape();
+    let t4 = start.elapsed();
+    println!("ck_primary: {:?}", t4 - t3);
 
     // Initialize ck for the secondary
     let circuit_secondary: NovaAugmentedCircuit<G1, C2> = NovaAugmentedCircuit::new(
@@ -121,6 +132,8 @@ where
     let mut cs: ShapeCS<G2> = ShapeCS::new();
     let _ = circuit_secondary.synthesize(&mut cs);
     let (r1cs_shape_secondary, ck_secondary) = cs.r1cs_shape();
+    let t5 = start.elapsed();
+    println!("ck_secondary: {:?}", t5 - t4);
 
     let mut pp = Self {
       F_arity_primary,
@@ -142,6 +155,8 @@ where
 
     // set the digest in pp
     pp.digest = compute_digest::<G1, PublicParams<G1, G2, C1, C2>>(&pp);
+    let t6 = start.elapsed();
+    println!("digest: {:?}", t6 - t5);
 
     pp
   }
