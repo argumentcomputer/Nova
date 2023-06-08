@@ -72,7 +72,7 @@ impl<G: Group> R1CS<G> {
   pub fn commitment_key(S: &R1CSShape<G>) -> CommitmentKey<G> {
     let num_cons = S.num_cons;
     let num_vars = S.num_vars;
-    let total_nz = S.A.len() + S.B.len() + S.C.len();
+    let total_nz = 0; // S.A.len() + S.B.len() + S.C.len();
     G::CE::setup(b"ck", max(max(num_cons, num_vars), total_nz))
   }
 }
