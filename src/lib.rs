@@ -771,15 +771,21 @@ type CompressedCommitment<G> = <<<G as Group>::CE as CommitmentEngineTrait<G>>::
 type CE<G> = <G as Group>::CE;
 
 fn compute_digest<G: Group, T: Serialize>(o: &T) -> G::Scalar {
+  println!("`compute_digest`");
+  let start = Instant::now();
   // obtain a vector of bytes representing public parameters
   let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
   bincode::serialize_into(&mut encoder, o).unwrap();
   let pp_bytes = encoder.finish().unwrap();
+  let t1 = start.elapsed();
+  println!("    pp_bytes = {:?}", t1);
 
   // convert pp_bytes into a short digest
   let mut hasher = Sha3_256::new();
   hasher.input(&pp_bytes);
   let digest = hasher.result();
+  let t2 = start.elapsed();
+  println!("    digest = {:?}", t2 - t1);
 
   // truncate the digest to NUM_HASH_BITS bits
   let bv = (0..NUM_HASH_BITS).map(|i| {
@@ -797,6 +803,8 @@ fn compute_digest<G: Group, T: Serialize>(o: &T) -> G::Scalar {
     }
     coeff += coeff;
   }
+  let t3 = start.elapsed();
+  println!("    into scalar = {:?}", t3 - t2);
   digest
 }
 
