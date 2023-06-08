@@ -157,6 +157,7 @@ where
     pp.digest = compute_digest::<G1, PublicParams<G1, G2, C1, C2>>(&pp);
     let t6 = start.elapsed();
     println!("digest: {:?}", t6 - t5);
+    println!("PublicParams::setup total: {:?}", t6);
 
     pp
   }
@@ -591,15 +592,15 @@ where
     ),
     NovaError,
   > {
-    println!("`CompressedSNARK::setup`");
+    println!("CompressedSNARK::setup");
     let start = Instant::now();
     let (pk_primary, vk_primary) = S1::setup(&pp.ck_primary, &pp.r1cs_shape_primary)?;
     let t1 = start.elapsed();
-    println!("    primary keys = {:?}", t1);
+    println!("primary keys: {:?}", t1);
 
     let (pk_secondary, vk_secondary) = S2::setup(&pp.ck_secondary, &pp.r1cs_shape_secondary)?;
     let t2 = start.elapsed();
-    println!("    secondary keys = {:?}", t2 - t1);
+    println!("secondary keys: {:?}", t2 - t1);
 
     let pk = ProverKey {
       pk_primary,
@@ -621,7 +622,7 @@ where
     };
 
     let t3 = start.elapsed();
-    println!("    time = {:?}", t3);
+    println!("CompressedSNARK::setup total: {:?}", t3);
 
     Ok((pk, vk))
   }
