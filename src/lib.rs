@@ -37,7 +37,7 @@ use core::marker::PhantomData;
 use std::time::Instant;
 use errors::NovaError;
 use ff::Field;
-use flate2::{write::ZlibEncoder, Compression};
+// use flate2::{write::ZlibEncoder, Compression};
 use gadgets::utils::scalar_as_base;
 use nifs::NIFS;
 use r1cs::{R1CSInstance, R1CSShape, R1CSWitness, RelaxedR1CSInstance, RelaxedR1CSWitness};
@@ -774,9 +774,10 @@ fn compute_digest<G: Group, T: Serialize>(o: &T) -> G::Scalar {
   println!("`compute_digest`");
   let start = Instant::now();
   // obtain a vector of bytes representing public parameters
-  let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
-  bincode::serialize_into(&mut encoder, o).unwrap();
-  let pp_bytes = encoder.finish().unwrap();
+  // let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
+  let mut pp_bytes = Vec::new();
+  bincode::serialize_into(&mut pp_bytes, o).unwrap();
+  // let pp_bytes = encoder.finish().unwrap();
   let t1 = start.elapsed();
   println!("    pp_bytes = {:?}", t1);
 
