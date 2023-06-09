@@ -148,6 +148,14 @@ where
 
     (allocated_aux, allocated_inputs)
   }
+
+  fn inputs_slice(&self) -> &[G::Scalar] {
+    &self.input_assignment
+  }
+
+  fn aux_slice(&self) -> &[G::Scalar] {
+    &self.aux_assignment
+  }
 }
 
 #[allow(dead_code)]
