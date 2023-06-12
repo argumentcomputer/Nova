@@ -9,7 +9,7 @@
 )]
 #![allow(non_snake_case)]
 #![allow(clippy::type_complexity)]
-#![forbid(unsafe_code)]
+// #![forbid(unsafe_code)] // Commented for development with `Abomonation`
 
 // private modules
 mod bellperson;
@@ -31,11 +31,13 @@ use crate::bellperson::{
   solver::SatisfyingAssignment,
 };
 use ::bellperson::{Circuit, ConstraintSystem};
+use abomonation::Abomonation;
+use abomonation_derive::Abomonation;
 use circuit::{NovaAugmentedCircuit, NovaAugmentedCircuitInputs, NovaAugmentedCircuitParams};
 use constants::{BN_LIMB_WIDTH, BN_N_LIMBS, NUM_FE_WITHOUT_IO_FOR_CRHF, NUM_HASH_BITS};
 use core::marker::PhantomData;
 use errors::NovaError;
-use ff::Field;
+use ff::{Field, PrimeField};
 use gadgets::utils::scalar_as_base;
 use nifs::NIFS;
 use r1cs::{R1CSInstance, R1CSShape, R1CSWitness, RelaxedR1CSInstance, RelaxedR1CSWitness};
@@ -49,8 +51,17 @@ use traits::{
 };
 
 /// A type that holds public parameters of Nova
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Serialize, Deserialize, Abomonation)]
 #[serde(bound = "")]
+#[abomonation_bounds(
+where
+  G1: Group<Base = <G2 as Group>::Scalar>,
+  G2: Group<Base = <G1 as Group>::Scalar>,
+  C1: StepCircuit<G1::Scalar>,
+  C2: StepCircuit<G2::Scalar>,
+  <G1::Scalar as PrimeField>::Repr: Abomonation,
+  <G2::Scalar as PrimeField>::Repr: Abomonation,
+)]
 pub struct PublicParams<G1, G2, C1, C2>
 where
   G1: Group<Base = <G2 as Group>::Scalar>,
@@ -70,6 +81,7 @@ where
   r1cs_shape_secondary: R1CSShape<G2>,
   augmented_circuit_params_primary: NovaAugmentedCircuitParams,
   augmented_circuit_params_secondary: NovaAugmentedCircuitParams,
+  #[abomonate_with(<G1::Scalar as PrimeField>::Repr)]
   digest: G1::Scalar, // digest of everything else with this field set to G1::Scalar::ZERO
   _p_c1: PhantomData<C1>,
   _p_c2: PhantomData<C2>,
@@ -413,7 +425,7 @@ where
 
     // check if the output hashes in R1CS instances point to the right running instances
     let (hash_primary, hash_secondary) = {
-      let mut hasher = <G2 as Group>::RO::new(
+      let mut hasher = <<G2 as Group>::RO as ROTrait<G2::Base, G2::Scalar>>::new(
         pp.ro_consts_secondary.clone(),
         NUM_FE_WITHOUT_IO_FOR_CRHF + 2 * pp.F_arity_primary,
       );
@@ -427,7 +439,7 @@ where
       }
       self.r_U_secondary.absorb_in_ro(&mut hasher);
 
-      let mut hasher2 = <G1 as Group>::RO::new(
+      let mut hasher2 = <<G1 as Group>::RO as ROTrait<G1::Base, G1::Scalar>>::new(
         pp.ro_consts_primary.clone(),
         NUM_FE_WITHOUT_IO_FOR_CRHF + 2 * pp.F_arity_secondary,
       );
@@ -489,8 +501,9 @@ where
 }
 
 /// A type that holds the prover key for `CompressedSNARK`
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Abomonation)]
 #[serde(bound = "")]
+#[abomonation_omit_bounds]
 pub struct ProverKey<G1, G2, C1, C2, S1, S2>
 where
   G1: Group<Base = <G2 as Group>::Scalar>,
@@ -507,8 +520,18 @@ where
 }
 
 /// A type that holds the verifier key for `CompressedSNARK`
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Abomonation)]
 #[serde(bound = "")]
+#[abomonation_bounds(
+where
+  G1: Group<Base = <G2 as Group>::Scalar>,
+  G2: Group<Base = <G1 as Group>::Scalar>,
+  C1: StepCircuit<G1::Scalar>,
+  C2: StepCircuit<G2::Scalar>,
+  S1: RelaxedR1CSSNARKTrait<G1>,
+  S2: RelaxedR1CSSNARKTrait<G2>,
+  <G1::Scalar as PrimeField>::Repr: Abomonation,
+)]
 pub struct VerifierKey<G1, G2, C1, C2, S1, S2>
 where
   G1: Group<Base = <G2 as Group>::Scalar>,
@@ -522,6 +545,7 @@ where
   F_arity_secondary: usize,
   ro_consts_primary: ROConstants<G1>,
   ro_consts_secondary: ROConstants<G2>,
+  #[abomonate_with(<G1::Scalar as PrimeField>::Repr)]
   digest: G1::Scalar,
   vk_primary: S1::VerifierKey,
   vk_secondary: S2::VerifierKey,
@@ -680,7 +704,7 @@ where
 
     // check if the output hashes in R1CS instances point to the right running instances
     let (hash_primary, hash_secondary) = {
-      let mut hasher = <G2 as Group>::RO::new(
+      let mut hasher = <<G2 as Group>::RO as ROTrait<G2::Base, G2::Scalar>>::new(
         vk.ro_consts_secondary.clone(),
         NUM_FE_WITHOUT_IO_FOR_CRHF + 2 * vk.F_arity_primary,
       );
@@ -694,7 +718,7 @@ where
       }
       self.r_U_secondary.absorb_in_ro(&mut hasher);
 
-      let mut hasher2 = <G1 as Group>::RO::new(
+      let mut hasher2 = <<G1 as Group>::RO as ROTrait<G1::Base, G1::Scalar>>::new(
         vk.ro_consts_primary.clone(),
         NUM_FE_WITHOUT_IO_FOR_CRHF + 2 * vk.F_arity_secondary,
       );
@@ -1028,6 +1052,9 @@ mod tests {
       CommitmentKeyExtTrait<G1, CE = <G1 as Group>::CE>,
     <G2::CE as CommitmentEngineTrait<G2>>::CommitmentKey:
       CommitmentKeyExtTrait<G2, CE = <G2 as Group>::CE>,
+    // this is due to the reliance on Abomonation
+    <<G1 as traits::Group>::Scalar as ff::PrimeField>::Repr: abomonation::Abomonation,
+    <<G2 as traits::Group>::Scalar as ff::PrimeField>::Repr: abomonation::Abomonation,
   {
     let circuit_primary = TrivialTestCircuit::default();
     let circuit_secondary = CubicCircuit::default();
@@ -1123,6 +1150,9 @@ mod tests {
       CommitmentKeyExtTrait<G1, CE = <G1 as Group>::CE>,
     <G2::CE as CommitmentEngineTrait<G2>>::CommitmentKey:
       CommitmentKeyExtTrait<G2, CE = <G2 as Group>::CE>,
+    // this is due to the reliance on Abomonation
+    <<G1 as traits::Group>::Scalar as ff::PrimeField>::Repr: abomonation::Abomonation,
+    <<G2 as traits::Group>::Scalar as ff::PrimeField>::Repr: abomonation::Abomonation,
   {
     let circuit_primary = TrivialTestCircuit::default();
     let circuit_secondary = CubicCircuit::default();
@@ -1221,6 +1251,9 @@ mod tests {
       CommitmentKeyExtTrait<G1, CE = <G1 as Group>::CE>,
     <G2::CE as CommitmentEngineTrait<G2>>::CommitmentKey:
       CommitmentKeyExtTrait<G2, CE = <G2 as Group>::CE>,
+    // this is due to the reliance on Abomonation
+    <<G1 as traits::Group>::Scalar as ff::PrimeField>::Repr: abomonation::Abomonation,
+    <<G2 as traits::Group>::Scalar as ff::PrimeField>::Repr: abomonation::Abomonation,
   {
     // y is a non-deterministic advice representing the fifth root of the input at a step.
     #[derive(Clone, Debug)]

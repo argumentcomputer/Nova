@@ -25,6 +25,8 @@ use crate::{
   },
   Commitment, CommitmentKey, CompressedCommitment,
 };
+use abomonation::Abomonation;
+use abomonation_derive::Abomonation;
 use bellperson::{gadgets::num::AllocatedNum, Circuit, ConstraintSystem, SynthesisError};
 use core::{cmp::max, marker::PhantomData};
 use ff::{Field, PrimeField};
@@ -59,28 +61,39 @@ impl<Scalar: PrimeField> IdentityPolynomial<Scalar> {
 }
 
 /// A type that holds R1CSShape in a form amenable to memory checking
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Abomonation)]
 #[serde(bound = "")]
+#[abomonation_bounds(where <G::Scalar as ff::PrimeField>::Repr: Abomonation)]
 pub struct R1CSShapeSparkRepr<G: Group> {
   N: usize, // size of the vectors
 
   // dense representation
+  #[abomonate_with(Vec<<G::Scalar as PrimeField>::Repr>)]
   row: Vec<G::Scalar>,
+  #[abomonate_with(Vec<<G::Scalar as PrimeField>::Repr>)]
   col: Vec<G::Scalar>,
+  #[abomonate_with(Vec<<G::Scalar as PrimeField>::Repr>)]
   val_A: Vec<G::Scalar>,
+  #[abomonate_with(Vec<<G::Scalar as PrimeField>::Repr>)]
   val_B: Vec<G::Scalar>,
+  #[abomonate_with(Vec<<G::Scalar as PrimeField>::Repr>)]
   val_C: Vec<G::Scalar>,
 
   // timestamp polynomials
+  #[abomonate_with(Vec<<G::Scalar as PrimeField>::Repr>)]
   row_read_ts: Vec<G::Scalar>,
+  #[abomonate_with(Vec<<G::Scalar as PrimeField>::Repr>)]
   row_audit_ts: Vec<G::Scalar>,
+  #[abomonate_with(Vec<<G::Scalar as PrimeField>::Repr>)]
   col_read_ts: Vec<G::Scalar>,
+  #[abomonate_with(Vec<<G::Scalar as PrimeField>::Repr>)]
   col_audit_ts: Vec<G::Scalar>,
 }
 
 /// A type that holds a commitment to a sparse polynomial
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Abomonation)]
 #[serde(bound = "")]
+#[abomonation_bounds(where <G::Scalar as PrimeField>::Repr: Abomonation)]
 pub struct R1CSShapeSparkCommitment<G: Group> {
   N: usize, // size of each vector
 
@@ -730,24 +743,28 @@ impl<G: Group> SumcheckEngine<G> for InnerSumcheckInstance<G> {
 }
 
 /// A type that represents the prover's key
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Abomonation)]
 #[serde(bound = "")]
+#[abomonation_bounds(where <G::Scalar as PrimeField>::Repr: Abomonation)]
 pub struct ProverKey<G: Group, EE: EvaluationEngineTrait<G, CE = G::CE>> {
   pk_ee: EE::ProverKey,
   S: R1CSShape<G>,
   S_repr: R1CSShapeSparkRepr<G>,
   S_comm: R1CSShapeSparkCommitment<G>,
+  #[abomonate_with(<G::Scalar as PrimeField>::Repr)]
   vk_digest: G::Scalar, // digest of verifier's key
 }
 
 /// A type that represents the verifier's key
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Abomonation)]
 #[serde(bound = "")]
+#[abomonation_bounds(where <G::Scalar as PrimeField>::Repr: Abomonation)]
 pub struct VerifierKey<G: Group, EE: EvaluationEngineTrait<G, CE = G::CE>> {
   num_cons: usize,
   num_vars: usize,
   vk_ee: EE::VerifierKey,
   S_comm: R1CSShapeSparkCommitment<G>,
+  #[abomonate_with(<G::Scalar as PrimeField>::Repr)]
   digest: G::Scalar,
 }
 
@@ -925,6 +942,8 @@ impl<G: Group, EE: EvaluationEngineTrait<G, CE = G::CE>> RelaxedR1CSSNARK<G, EE>
 
 impl<G: Group, EE: EvaluationEngineTrait<G, CE = G::CE>> RelaxedR1CSSNARKTrait<G>
   for RelaxedR1CSSNARK<G, EE>
+where
+  <G::Scalar as PrimeField>::Repr: Abomonation,
 {
   type ProverKey = ProverKey<G, EE>;
   type VerifierKey = VerifierKey<G, EE>;
@@ -2127,6 +2146,8 @@ where
 
 impl<G: Group, EE: EvaluationEngineTrait<G, CE = G::CE>, C: StepCircuit<G::Scalar>>
   SpartanSNARK<G, EE, C>
+where
+  <G::Scalar as PrimeField>::Repr: Abomonation,
 {
   /// Produces prover and verifier keys for Spartan
   pub fn setup(sc: C) -> Result<(SpartanProverKey<G, EE>, SpartanVerifierKey<G, EE>), NovaError> {
@@ -2252,7 +2273,10 @@ mod tests {
     test_spartan_snark_with::<G, EE>();
   }
 
-  fn test_spartan_snark_with<G: Group, EE: EvaluationEngineTrait<G, CE = G::CE>>() {
+  fn test_spartan_snark_with<G: Group, EE: EvaluationEngineTrait<G, CE = G::CE>>()
+  where
+    <G::Scalar as PrimeField>::Repr: Abomonation,
+  {
     let circuit = CubicCircuit::default();
 
     // produce keys
