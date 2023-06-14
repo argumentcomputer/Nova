@@ -11,7 +11,7 @@ license-file = "LICENSE"
 keywords = ["zkSNARKs", "cryptography", "proofs"]
 
 [dependencies]
-bellperson = { git = "https://github.com/lurk-lab/bellperson", branch = "icfp-benchmarks" }
+bellperson = { git = "https://github.com/lurk-lab/bellperson", branch = "master" }
 ff = { version = "0.13.0", features = ["derive"] }
 digest = "0.8.1"
 sha3 = "0.8.2"

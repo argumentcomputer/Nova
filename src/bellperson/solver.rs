@@ -110,11 +110,11 @@ where
     true
   }
 
-  fn extend(&mut self, other: Self) {
+  fn extend(&mut self, other: &Self) {
     self.input_assignment
             // Skip first input, which must have been a temporarily allocated one variable.
             .extend(&other.input_assignment[1..]);
-    self.aux_assignment.extend(other.aux_assignment);
+    self.aux_assignment.extend(&other.aux_assignment);
   }
 
   fn is_witness_generator(&self) -> bool {
