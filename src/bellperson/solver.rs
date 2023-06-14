@@ -148,18 +148,18 @@ where
     true
   }
 
-  fn extend(&mut self, other: Self) {
-    self.a_aux_density.extend(other.a_aux_density, false);
-    self.b_input_density.extend(other.b_input_density, true);
-    self.b_aux_density.extend(other.b_aux_density, false);
+  fn extend(&mut self, other: &Self) {
+    self.a_aux_density.extend(&other.a_aux_density, false);
+    self.b_input_density.extend(&other.b_input_density, true);
+    self.b_aux_density.extend(&other.b_aux_density, false);
 
-    self.a.extend(other.a);
-    self.b.extend(other.b);
-    self.c.extend(other.c);
+    self.a.extend(&other.a);
+    self.b.extend(&other.b);
+    self.c.extend(&other.c);
 
     self.input_assignment
             // Skip first input, which must have been a temporarily allocated one variable.
             .extend(&other.input_assignment[1..]);
-    self.aux_assignment.extend(other.aux_assignment);
+    self.aux_assignment.extend(&other.aux_assignment);
   }
 }
