@@ -19,33 +19,39 @@ use crate::{
   },
   Commitment, CommitmentKey,
 };
+use abomonation::Abomonation;
+use abomonation_derive::Abomonation;
 use ff::Field;
 use itertools::concat;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
 /// A type that represents the prover's key
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Abomonation)]
 #[serde(bound = "")]
+#[abomonation_bounds(where <G::Scalar as ff::PrimeField>::Repr: Abomonation)]
 pub struct ProverKey<G: Group, EE: EvaluationEngineTrait<G, CE = G::CE>> {
   pk_ee: EE::ProverKey,
   S: R1CSShape<G>,
+  #[abomonate_with(<G::Scalar as ff::PrimeField>::Repr)]
   vk_digest: G::Scalar, // digest of the verifier's key
 }
 
 /// A type that represents the verifier's key
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Abomonation)]
 #[serde(bound = "")]
+#[abomonation_bounds(where <G::Scalar as ff::PrimeField>::Repr: Abomonation)]
 pub struct VerifierKey<G: Group, EE: EvaluationEngineTrait<G, CE = G::CE>> {
   vk_ee: EE::VerifierKey,
   S: R1CSShape<G>,
+  #[abomonate_with(<G::Scalar as ff::PrimeField>::Repr)]
   digest: G::Scalar,
 }
 
 /// A succinct proof of knowledge of a witness to a relaxed R1CS instance
 /// The proof is produced using Spartan's combination of the sum-check and
 /// the commitment to a vector viewed as a polynomial commitment
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(bound = "")]
 pub struct RelaxedR1CSSNARK<G: Group, EE: EvaluationEngineTrait<G, CE = G::CE>> {
   sc_proof_outer: SumcheckProof<G>,
@@ -60,6 +66,8 @@ pub struct RelaxedR1CSSNARK<G: Group, EE: EvaluationEngineTrait<G, CE = G::CE>> 
 
 impl<G: Group, EE: EvaluationEngineTrait<G, CE = G::CE>> RelaxedR1CSSNARKTrait<G>
   for RelaxedR1CSSNARK<G, EE>
+  where
+  <G::Scalar as ff::PrimeField>::Repr: Abomonation,
 {
   type ProverKey = ProverKey<G, EE>;
   type VerifierKey = VerifierKey<G, EE>;

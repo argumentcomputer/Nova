@@ -33,6 +33,8 @@ bitvec = "1.0"
 byteorder = "1.4.3"
 thiserror = "1.0"
 halo2curves = { version = "0.1.0", features = ["derive_serde"] }
+abomonation = "0.7.3"
+abomonation_derive = { git = "https://github.com/winston-h-zhang/abomonation_derive.git" }
 
 [target.'cfg(any(target_arch = "x86_64", target_arch = "aarch64"))'.dependencies]
 pasta-msm = { git="https://github.com/lurk-lab/pasta-msm", branch="dev", version = "0.1.4" }
