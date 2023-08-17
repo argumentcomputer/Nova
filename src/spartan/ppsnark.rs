@@ -59,8 +59,8 @@ impl<Scalar: PrimeField> IdentityPolynomial<Scalar> {
   }
 }
 
-/// A type that holds `R1CSShape` in a form amenable to memory checking
-#[derive(Clone, Serialize, Deserialize)]
+/// A type that holds R1CSShape in a form amenable to memory checking
+#[derive(Clone, Serialize, Deserialize, Abomonation)]
 #[serde(bound = "")]
 #[abomonation_bounds(where <G::Scalar as ff::PrimeField>::Repr: Abomonation)]
 pub struct R1CSShapeSparkRepr<G: Group> {
