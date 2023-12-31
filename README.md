@@ -1,3 +1,6 @@
+> [!WARNING]
+> Technical fork, the main development is happening at https://github.com/lurk-lab/arecibo
+
 # Nova: High-speed recursive arguments from folding schemes
 
 Nova is a high-speed recursive SNARK (a SNARK is type cryptographic proof system that enables a prover to prove a mathematical statement to a verifier with a short proof and succinct verification, and a recursive SNARK enables producing proofs that prove statements about prior proofs). 
