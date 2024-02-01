@@ -1124,7 +1124,6 @@ mod tests {
 
     if generate_keys_to_json {
       let serialized_vk = serde_json::to_string(&vk).unwrap();std::fs::write(std::path::Path::new("vk.json"), serialized_vk).expect("Unable to write file");
-      let serialized_pk = serde_json::to_string(&pk).unwrap();std::fs::write(std::path::Path::new("pk.json"), serialized_pk).expect("Unable to write file");
     }
     // produce a compressed SNARK
     let res = CompressedSNARK::<_, _, _, _, S1Prime<G1>, S2Prime<G2>>::prove(&pp, &pk, &recursive_snark);
