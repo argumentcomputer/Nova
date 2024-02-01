@@ -1,7 +1,5 @@
 //! This library implements Nova, a high-speed recursive SNARK.
 #![deny(
-  warnings,
-  unused,
   future_incompatible,
   nonstandard_style,
   rust_2018_idioms,
@@ -1053,15 +1051,15 @@ mod tests {
     test_ivc_nontrivial_with::<bn256::Point, grumpkin::Point>();
   }
 
-  fn test_ivc_nontrivial_with_compression_with<G1, G2>()
-  where
-    G1: Group<Base = <G2 as Group>::Scalar>,
-    G2: Group<Base = <G1 as Group>::Scalar>,
+  fn test_ivc_nontrivial_with_compression_with<G1, G2>(generate_keys_to_json: bool)
+    where
+        G1: Group<Base = <G2 as Group>::Scalar>,
+        G2: Group<Base = <G1 as Group>::Scalar>,
     // this is due to the reliance on CommitmentKeyExtTrait as a bound in ipa_pc
-    <G1::CE as CommitmentEngineTrait<G1>>::CommitmentKey:
-      CommitmentKeyExtTrait<G1, CE = <G1 as Group>::CE>,
-    <G2::CE as CommitmentEngineTrait<G2>>::CommitmentKey:
-      CommitmentKeyExtTrait<G2, CE = <G2 as Group>::CE>,
+        <G1::CE as CommitmentEngineTrait<G1>>::CommitmentKey:
+        CommitmentKeyExtTrait<G1, CE = <G1 as Group>::CE>,
+        <G2::CE as CommitmentEngineTrait<G2>>::CommitmentKey:
+        CommitmentKeyExtTrait<G2, CE = <G2 as Group>::CE>,
   {
     let circuit_primary = TrivialTestCircuit::default();
     let circuit_secondary = CubicCircuit::default();
@@ -1124,11 +1122,18 @@ mod tests {
     // produce the prover and verifier keys for compressed snark
     let (pk, vk) = CompressedSNARK::<_, _, _, _, S1<G1>, S2<G2>>::setup(&pp).unwrap();
 
+    if generate_keys_to_json {
+      let serialized_vk = serde_json::to_string(&vk).unwrap();std::fs::write(std::path::Path::new("vk.json"), serialized_vk).expect("Unable to write file");
+      let serialized_pk = serde_json::to_string(&pk).unwrap();std::fs::write(std::path::Path::new("pk.json"), serialized_pk).expect("Unable to write file");
+    }
     // produce a compressed SNARK
     let res = CompressedSNARK::<_, _, _, _, S1<G1>, S2<G2>>::prove(&pp, &pk, &recursive_snark);
     assert!(res.is_ok());
     let compressed_snark = res.unwrap();
 
+    if generate_keys_to_json {
+      let serialized_compressed_snark = serde_json::to_string(&compressed_snark).unwrap();std::fs::write(std::path::Path::new("compressed-snark.json"), serialized_compressed_snark).expect("Unable to write file");
+    }
     // verify the compressed SNARK
     let res = compressed_snark.verify(
       &vk,
@@ -1139,13 +1144,16 @@ mod tests {
     assert!(res.is_ok());
   }
 
+  // SAVE_GENERATED_KEYS_TO_JSON=true cargo +nightly test test_ivc_nontrivial_with_compression
   #[test]
   fn test_ivc_nontrivial_with_compression() {
+    //get boolean args from commandline to generate keys to json
+    let generate_keys_to_json = std::env::var("SAVE_GENERATED_KEYS_TO_JSON").unwrap_or_default() == "true";
     type G1 = pasta_curves::pallas::Point;
     type G2 = pasta_curves::vesta::Point;
 
-    test_ivc_nontrivial_with_compression_with::<G1, G2>();
-    test_ivc_nontrivial_with_compression_with::<bn256::Point, grumpkin::Point>();
+    test_ivc_nontrivial_with_compression_with::<G1, G2>(generate_keys_to_json);
+    test_ivc_nontrivial_with_compression_with::<bn256::Point, grumpkin::Point>(generate_keys_to_json);
   }
 
   fn test_ivc_nontrivial_with_spark_compression_with<G1, G2>()
