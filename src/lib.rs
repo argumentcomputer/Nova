@@ -1143,16 +1143,14 @@ mod tests {
     assert!(res.is_ok());
   }
 
-  // SAVE_GENERATED_KEYS_TO_JSON=true cargo +nightly test test_ivc_nontrivial_with_compression
   #[test]
   fn test_ivc_nontrivial_with_compression() {
     //get boolean args from commandline to generate keys to json
-    let generate_keys_to_json = std::env::var("SAVE_GENERATED_KEYS_TO_JSON").unwrap_or_default() == "true";
     type G1 = pasta_curves::pallas::Point;
     type G2 = pasta_curves::vesta::Point;
 
-    test_ivc_nontrivial_with_compression_with::<G1, G2>(generate_keys_to_json);
-    test_ivc_nontrivial_with_compression_with::<bn256::Point, grumpkin::Point>(generate_keys_to_json);
+    test_ivc_nontrivial_with_compression_with::<G1, G2>(false);
+    test_ivc_nontrivial_with_compression_with::<bn256::Point, grumpkin::Point>(false);
   }
 
   fn test_ivc_nontrivial_with_spark_compression_with<G1, G2>()
@@ -1475,5 +1473,16 @@ mod tests {
 
     test_ivc_base_with::<G1, G2>();
     test_ivc_base_with::<bn256::Point, grumpkin::Point>();
+  }
+
+  // SAVE_GENERATED_KEYS_TO_JSON=true cargo +nightly test test_ivc_nontrivial_with_compression_pasta --release -- --nocapture
+  #[test]
+  fn test_ivc_nontrivial_with_compression_pasta() {
+    //get boolean args from commandline to generate keys to json
+    let generate_keys_to_json = std::env::var("SAVE_GENERATED_KEYS_TO_JSON").unwrap_or_default() == "true";
+    type G1 = pasta_curves::pallas::Point;
+    type G2 = pasta_curves::vesta::Point;
+
+    test_ivc_nontrivial_with_compression_with::<G1, G2>(generate_keys_to_json);
   }
 }
