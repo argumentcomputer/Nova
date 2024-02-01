@@ -1120,14 +1120,14 @@ mod tests {
     assert_eq!(zn_secondary, vec![<G2 as Group>::Scalar::from(2460515u64)]);
 
     // produce the prover and verifier keys for compressed snark
-    let (pk, vk) = CompressedSNARK::<_, _, _, _, S1<G1>, S2<G2>>::setup(&pp).unwrap();
+    let (pk, vk) = CompressedSNARK::<_, _, _, _, S1Prime<G1>, S2Prime<G2>>::setup(&pp).unwrap();
 
     if generate_keys_to_json {
       let serialized_vk = serde_json::to_string(&vk).unwrap();std::fs::write(std::path::Path::new("vk.json"), serialized_vk).expect("Unable to write file");
       let serialized_pk = serde_json::to_string(&pk).unwrap();std::fs::write(std::path::Path::new("pk.json"), serialized_pk).expect("Unable to write file");
     }
     // produce a compressed SNARK
-    let res = CompressedSNARK::<_, _, _, _, S1<G1>, S2<G2>>::prove(&pp, &pk, &recursive_snark);
+    let res = CompressedSNARK::<_, _, _, _, S1Prime<G1>, S2Prime<G2>>::prove(&pp, &pk, &recursive_snark);
     assert!(res.is_ok());
     let compressed_snark = res.unwrap();
 
