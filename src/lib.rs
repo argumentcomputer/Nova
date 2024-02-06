@@ -1,5 +1,7 @@
 //! This library implements Nova, a high-speed recursive SNARK.
 #![deny(
+  warnings,
+  unused,
   future_incompatible,
   nonstandard_style,
   rust_2018_idioms,
@@ -1477,12 +1479,10 @@ mod tests {
 
   // SAVE_GENERATED_KEYS_TO_JSON=true cargo +nightly test test_ivc_nontrivial_with_compression_pasta --release -- --nocapture
   #[test]
-  fn test_ivc_nontrivial_with_compression_pasta() {
-    //get boolean args from commandline to generate keys to json
-    let generate_keys_to_json = std::env::var("SAVE_GENERATED_KEYS_TO_JSON").unwrap_or_default() == "true";
+  fn solidity_compatibility_e2e_pasta() {
     type G1 = pasta_curves::pallas::Point;
     type G2 = pasta_curves::vesta::Point;
 
-    test_ivc_nontrivial_with_compression_with::<G1, G2>(generate_keys_to_json);
+    test_ivc_nontrivial_with_compression_with::<G1, G2>(true);
   }
 }
