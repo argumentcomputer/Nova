@@ -1147,7 +1147,6 @@ mod tests {
 
   #[test]
   fn test_ivc_nontrivial_with_compression() {
-    //get boolean args from commandline to generate keys to json
     type G1 = pasta_curves::pallas::Point;
     type G2 = pasta_curves::vesta::Point;
 
