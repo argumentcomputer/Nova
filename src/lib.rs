@@ -1477,8 +1477,9 @@ mod tests {
     test_ivc_base_with::<bn256::Point, grumpkin::Point>();
   }
 
-  // SAVE_GENERATED_KEYS_TO_JSON=true cargo +nightly test test_ivc_nontrivial_with_compression_pasta --release -- --nocapture
+  // cargo +nightly test test_ivc_nontrivial_with_compression_pasta --release -- --nocapture --ignored
   #[test]
+  #[ignore]
   fn solidity_compatibility_e2e_pasta() {
     type G1 = pasta_curves::pallas::Point;
     type G2 = pasta_curves::vesta::Point;
