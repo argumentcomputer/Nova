@@ -1053,15 +1053,15 @@ mod tests {
     test_ivc_nontrivial_with::<bn256::Point, grumpkin::Point>();
   }
 
-  fn test_ivc_nontrivial_with_compression_with<G1, G2>()
-  where
-    G1: Group<Base = <G2 as Group>::Scalar>,
-    G2: Group<Base = <G1 as Group>::Scalar>,
+  fn test_ivc_nontrivial_with_compression_with<G1, G2>(generate_keys_to_json: bool)
+    where
+        G1: Group<Base = <G2 as Group>::Scalar>,
+        G2: Group<Base = <G1 as Group>::Scalar>,
     // this is due to the reliance on CommitmentKeyExtTrait as a bound in ipa_pc
-    <G1::CE as CommitmentEngineTrait<G1>>::CommitmentKey:
-      CommitmentKeyExtTrait<G1, CE = <G1 as Group>::CE>,
-    <G2::CE as CommitmentEngineTrait<G2>>::CommitmentKey:
-      CommitmentKeyExtTrait<G2, CE = <G2 as Group>::CE>,
+        <G1::CE as CommitmentEngineTrait<G1>>::CommitmentKey:
+        CommitmentKeyExtTrait<G1, CE = <G1 as Group>::CE>,
+        <G2::CE as CommitmentEngineTrait<G2>>::CommitmentKey:
+        CommitmentKeyExtTrait<G2, CE = <G2 as Group>::CE>,
   {
     let circuit_primary = TrivialTestCircuit::default();
     let circuit_secondary = CubicCircuit::default();
@@ -1122,13 +1122,19 @@ mod tests {
     assert_eq!(zn_secondary, vec![<G2 as Group>::Scalar::from(2460515u64)]);
 
     // produce the prover and verifier keys for compressed snark
-    let (pk, vk) = CompressedSNARK::<_, _, _, _, S1<G1>, S2<G2>>::setup(&pp).unwrap();
+    let (pk, vk) = CompressedSNARK::<_, _, _, _, S1Prime<G1>, S2Prime<G2>>::setup(&pp).unwrap();
 
+    if generate_keys_to_json {
+      let serialized_vk = serde_json::to_string(&vk).unwrap();std::fs::write(std::path::Path::new("vk.json"), serialized_vk).expect("Unable to write file");
+    }
     // produce a compressed SNARK
-    let res = CompressedSNARK::<_, _, _, _, S1<G1>, S2<G2>>::prove(&pp, &pk, &recursive_snark);
+    let res = CompressedSNARK::<_, _, _, _, S1Prime<G1>, S2Prime<G2>>::prove(&pp, &pk, &recursive_snark);
     assert!(res.is_ok());
     let compressed_snark = res.unwrap();
 
+    if generate_keys_to_json {
+      let serialized_compressed_snark = serde_json::to_string(&compressed_snark).unwrap();std::fs::write(std::path::Path::new("compressed-snark.json"), serialized_compressed_snark).expect("Unable to write file");
+    }
     // verify the compressed SNARK
     let res = compressed_snark.verify(
       &vk,
@@ -1144,8 +1150,8 @@ mod tests {
     type G1 = pasta_curves::pallas::Point;
     type G2 = pasta_curves::vesta::Point;
 
-    test_ivc_nontrivial_with_compression_with::<G1, G2>();
-    test_ivc_nontrivial_with_compression_with::<bn256::Point, grumpkin::Point>();
+    test_ivc_nontrivial_with_compression_with::<G1, G2>(false);
+    test_ivc_nontrivial_with_compression_with::<bn256::Point, grumpkin::Point>(false);
   }
 
   fn test_ivc_nontrivial_with_spark_compression_with<G1, G2>()
@@ -1468,5 +1474,15 @@ mod tests {
 
     test_ivc_base_with::<G1, G2>();
     test_ivc_base_with::<bn256::Point, grumpkin::Point>();
+  }
+
+  // cargo +nightly test test_ivc_nontrivial_with_compression_pasta --release -- --nocapture --ignored
+  #[test]
+  #[ignore]
+  fn solidity_compatibility_e2e_pasta() {
+    type G1 = pasta_curves::pallas::Point;
+    type G2 = pasta_curves::vesta::Point;
+
+    test_ivc_nontrivial_with_compression_with::<G1, G2>(true);
   }
 }
