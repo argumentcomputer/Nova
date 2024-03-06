@@ -1054,14 +1054,14 @@ mod tests {
   }
 
   fn test_ivc_nontrivial_with_compression_with<G1, G2>(generate_keys_to_json: bool)
-    where
-        G1: Group<Base = <G2 as Group>::Scalar>,
-        G2: Group<Base = <G1 as Group>::Scalar>,
+  where
+    G1: Group<Base = <G2 as Group>::Scalar>,
+    G2: Group<Base = <G1 as Group>::Scalar>,
     // this is due to the reliance on CommitmentKeyExtTrait as a bound in ipa_pc
-        <G1::CE as CommitmentEngineTrait<G1>>::CommitmentKey:
-        CommitmentKeyExtTrait<G1, CE = <G1 as Group>::CE>,
-        <G2::CE as CommitmentEngineTrait<G2>>::CommitmentKey:
-        CommitmentKeyExtTrait<G2, CE = <G2 as Group>::CE>,
+    <G1::CE as CommitmentEngineTrait<G1>>::CommitmentKey:
+      CommitmentKeyExtTrait<G1, CE = <G1 as Group>::CE>,
+    <G2::CE as CommitmentEngineTrait<G2>>::CommitmentKey:
+      CommitmentKeyExtTrait<G2, CE = <G2 as Group>::CE>,
   {
     let circuit_primary = TrivialTestCircuit::default();
     let circuit_secondary = CubicCircuit::default();
@@ -1125,15 +1125,22 @@ mod tests {
     let (pk, vk) = CompressedSNARK::<_, _, _, _, S1Prime<G1>, S2Prime<G2>>::setup(&pp).unwrap();
 
     if generate_keys_to_json {
-      let serialized_vk = serde_json::to_string(&vk).unwrap();std::fs::write(std::path::Path::new("vk.json"), serialized_vk).expect("Unable to write file");
+      let serialized_vk = serde_json::to_string(&vk).unwrap();
+      std::fs::write(std::path::Path::new("vk.json"), serialized_vk).expect("Unable to write file");
     }
     // produce a compressed SNARK
-    let res = CompressedSNARK::<_, _, _, _, S1Prime<G1>, S2Prime<G2>>::prove(&pp, &pk, &recursive_snark);
+    let res =
+      CompressedSNARK::<_, _, _, _, S1Prime<G1>, S2Prime<G2>>::prove(&pp, &pk, &recursive_snark);
     assert!(res.is_ok());
     let compressed_snark = res.unwrap();
 
     if generate_keys_to_json {
-      let serialized_compressed_snark = serde_json::to_string(&compressed_snark).unwrap();std::fs::write(std::path::Path::new("compressed-snark.json"), serialized_compressed_snark).expect("Unable to write file");
+      let serialized_compressed_snark = serde_json::to_string(&compressed_snark).unwrap();
+      std::fs::write(
+        std::path::Path::new("compressed-snark.json"),
+        serialized_compressed_snark,
+      )
+      .expect("Unable to write file");
     }
     // verify the compressed SNARK
     let res = compressed_snark.verify(
@@ -1234,8 +1241,14 @@ mod tests {
     let compressed_snark = res.unwrap();
 
     if generate_keys_to_json {
-      let serialized_compressed_snark = serde_json::to_string(&compressed_snark).unwrap();std::fs::write(std::path::Path::new("compressed-snark-grumpkin.json"), serialized_compressed_snark).expect("Unable to write file");
-      let vk_serialized = serde_json::to_string(&vk).unwrap();std::fs::write(std::path::Path::new("vk-grumpkin.json"), vk_serialized).expect("Unable to write file");
+      let serialized_compressed_snark = serde_json::to_string(&compressed_snark).unwrap();
+      std::fs::write(
+        std::path::Path::new("compressed-snark.json"),
+        serialized_compressed_snark,
+      )
+      .expect("Unable to write file");
+      let vk_serialized = serde_json::to_string(&vk).unwrap();
+      std::fs::write(std::path::Path::new("vk.json"), vk_serialized).expect("Unable to write file");
     }
 
     // verify the compressed SNARK
@@ -1499,5 +1512,5 @@ mod tests {
     type G2 = grumpkin::Point;
 
     test_ivc_nontrivial_with_spark_compression_with::<G1, G2>(true);
-    }
+  }
 }
